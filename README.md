@@ -87,7 +87,12 @@ npm start
 ensemble/
 ├── app/                    # Next.js App Router pages
 │   ├── about/             # About page
+│   ├── faq/               # FAQ page
 │   ├── pricing/           # Pricing page
+│   ├── services/          # Service pages
+│   │   ├── audio-to-sheet/    # Audio to sheet music conversion
+│   │   ├── sheet-to-digital/  # Sheet to digital conversion
+│   │   └── video-to-sheet/    # Video to sheet music conversion
 │   ├── signin/            # Authentication pages
 │   ├── signup/
 │   ├── layout.tsx         # Root layout
@@ -96,11 +101,17 @@ ensemble/
 ├── components/            # Reusable components
 │   ├── ui/               # UI component library
 │   ├── header.tsx        # Navigation header
-│   └── footer.tsx        # Site footer
+│   ├── footer.tsx        # Site footer
+│   └── theme-provider.tsx # Theme provider component
+├── hooks/                 # Custom React hooks
+│   ├── use-mobile.ts     # Mobile detection hook
+│   └── use-toast.ts      # Toast notification hook
+├── lib/                  # Utility functions
+│   └── utils.ts          # Common utilities
 ├── public/               # Static assets
-│   ├── images/          # Image assets
-│   └── icons/           # Icon files
-└── lib/                 # Utility functions
+│   └── [images]          # Image assets
+└── styles/               # Additional stylesheets
+    └── globals.css       # Legacy global styles
 \`\`\`
 
 ## Pricing Plans
