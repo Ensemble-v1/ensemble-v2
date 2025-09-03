@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: ensemble-backend
+    runtime: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        value: https://ensemble-v2.onrender.com
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+
+  - type: web
+    name: ensemble-frontend
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: NEXT_PUBLIC_BACKEND_URL
+        value: https://ensemble-backend.onrender.com
+
+databases:
+  - name: ensemble-db
+    databaseName: ensemble
+    user: ensemble

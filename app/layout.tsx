@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
 
 const inter = Inter({
@@ -22,14 +23,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} antialiased`}>
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;600;700;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="font-inter bg-white text-black">{children}</body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={`${inter.variable} antialiased`}>
+        <head>
+          <link
+            href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;600;700;900&display=swap"
+            rel="stylesheet"
+          />
+        </head>
+        <body className="font-inter bg-white text-black">{children}</body>
+      </html>
+    </ClerkProvider>
   )
 }
