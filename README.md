@@ -1,30 +1,34 @@
-# Ensemble - Sheet Music to Digital Converter
+# Ensemble - AI-Powered Sheet Music Conversion
 
-Transform traditional sheet music into digital formats with AI-powered optical music recognition. Convert handwritten or printed sheet music to MusicXML and MIDI files instantly.
+Transform traditional sheet music into digital formats with advanced AI-powered optical music recognition. Convert handwritten or printed sheet music to MusicXML and MIDI files instantly using our cutting-edge OEMER technology.
 
 ## 🚀 Features
 
-- **AI-Powered OMR**: Advanced optical music recognition using OEMER
+- **AI-Powered OMR**: Advanced optical music recognition using OEMER (End-to-End OMR)
 - **Multiple Formats**: Convert to MusicXML and MIDI formats
-- **Web Interface**: Modern, responsive web application
+- **Web Interface**: Modern, responsive Next.js web application
 - **Authentication**: Secure user authentication with Clerk
-- **Serverless Deployment**: Optimized for Render deployment
-- **Mock Processing**: Development mode with instant results
+- **Production Ready**: Optimized for Render deployment
+- **Enhanced Processing**: Improved image preprocessing and error handling
+- **Real-time Logging**: Comprehensive logging throughout the conversion process
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Next.js 15** - React framework
+- **Next.js 15** - React framework with App Router
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Utility-first styling
 - **Clerk** - Authentication and user management
+- **Radix UI** - Accessible component library
 
 ### Backend
 - **Node.js 18+** - Runtime environment
 - **Express.js** - Web framework
-- **Sharp** - Image processing
-- **OEMER** - Optical music recognition
+- **Sharp** - High-performance image processing
+- **OEMER** - State-of-the-art optical music recognition
 - **Multer** - File upload handling
+- **Winston** - Structured logging
+- **xml2js** - XML parsing and generation
 
 ## 📋 Prerequisites
 
@@ -32,6 +36,7 @@ Transform traditional sheet music into digital formats with AI-powered optical m
 - npm or yarn
 - Git
 - Render account (for deployment)
+- Python 3.8+ (for OEMER)
 
 ## 🚀 Quick Start
 
@@ -39,7 +44,7 @@ Transform traditional sheet music into digital formats with AI-powered optical m
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Ensemble-v1/ensemble-v2.git
    cd ensemble-v2
    ```
 
@@ -75,6 +80,20 @@ Transform traditional sheet music into digital formats with AI-powered optical m
    - Frontend: http://localhost:3000
    - Backend: http://localhost:3001
 
+### OEMER Installation
+
+The application requires OEMER to be installed for sheet music processing:
+
+```bash
+# Install OEMER globally (recommended)
+pip install oemer
+
+# Or install in a virtual environment
+python -m venv oemer-env
+source oemer-env/bin/activate  # On Windows: oemer-env\Scripts\activate
+pip install oemer
+```
+
 ## 🚀 Production Deployment
 
 ### Deploy to Render
@@ -102,6 +121,7 @@ Transform traditional sheet music into digital formats with AI-powered optical m
      FRONTEND_URL=https://your-frontend.onrender.com
      CLERK_SECRET_KEY=your_clerk_secret_key
      CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+     PYTHON_PATH=python3  # Path to Python installation
      ```
 
 4. **Create Frontend Service**
@@ -139,6 +159,7 @@ NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
 CLERK_SECRET_KEY=sk_test_...
 CLERK_PUBLISHABLE_KEY=pk_test_...
+PYTHON_PATH=python3
 ```
 
 ## 📁 Project Structure
@@ -152,8 +173,12 @@ ensemble-v2/
 ├── backend/                # Express.js backend
 │   ├── routes/            # API routes
 │   ├── services/          # Business logic
+│   │   ├── oemer-service.js # OEMER integration
+│   │   └── midi-converter.js # MIDI conversion
 │   ├── middleware/        # Express middleware
-│   └── utils/             # Utility functions
+│   ├── utils/             # Utility functions
+│   ├── logs/              # Log files
+│   └── temp/              # Temporary files
 ├── components/            # Shared components
 ├── lib/                   # Shared utilities
 ├── public/                # Static assets
@@ -169,6 +194,14 @@ ensemble-v2/
 - `GET /api/sheet-to-digital/status/:jobId` - Check conversion status
 - `GET /api/sheet-to-digital/formats` - Get supported formats
 
+### OEMER Service Features
+
+- **Direct Command Execution**: Uses OEMER CLI instead of complex Python scripts
+- **Enhanced Image Processing**: Sharp-based preprocessing for better OCR results
+- **Comprehensive Logging**: Detailed logging at every processing step
+- **Error Handling**: Robust error handling with timeout management
+- **Model Verification**: Automatic model file verification and download
+
 ## 🧪 Development vs Production
 
 ### Development Mode
@@ -176,12 +209,14 @@ ensemble-v2/
 - Hot reload for both frontend and backend
 - Detailed error logging
 - Development authentication bypass
+- Enhanced debugging output
 
 ### Production Mode
 - Real OMR processing with OEMER
 - Optimized builds
 - Error handling for production
 - Secure authentication required
+- Performance monitoring
 
 ## 🐛 Troubleshooting
 
@@ -202,9 +237,23 @@ ensemble-v2/
    - Verify supported formats
    - Ensure proper CORS configuration
 
-4. **OMR Processing Fails**
-   - Development: Uses mock processing
-   - Production: Check OEMER installation and dependencies
+4. **OEMER Processing Issues**
+   - Verify OEMER is installed: `oemer --help`
+   - Check Python path in environment variables
+   - Ensure model files are available
+   - Check for CUDA compatibility warnings (CPU fallback works)
+
+5. **OEMER Installation**
+   ```bash
+   # Check if OEMER is installed
+   oemer --help
+   
+   # If not installed
+   pip install oemer
+   
+   # Verify installation
+   python -c "import oemer; print('OEMER installed successfully')"
+   ```
 
 ### Logs
 
@@ -214,15 +263,60 @@ cd backend && tail -f logs/combined.log
 
 # Frontend logs
 npm run dev  # Check terminal output
+
+# OEMER-specific logs
+cd backend && tail -f logs/error.log
 ```
+
+### OEMER Model Issues
+
+If OEMER models are missing:
+```bash
+# OEMER will automatically download models on first use
+# If issues persist, try:
+python -c "import oemer; print('Models path:', oemer.MODULE_PATH)"
+```
+
+## 🏗️ Architecture Overview
+
+### Frontend Architecture
+- **Next.js App Router**: Modern routing system
+- **Component-Based UI**: Reusable UI components with Radix UI
+- **State Management**: React hooks for local state
+- **Authentication**: Clerk integration for user management
+
+### Backend Architecture
+- **Express.js REST API**: Clean API design
+- **OEMER Service**: Direct command-line integration
+- **File Processing**: Sharp-based image preprocessing
+- **Logging**: Winston structured logging
+- **Error Handling**: Comprehensive error management
+
+### Data Flow
+1. User uploads sheet music image
+2. Image is preprocessed using Sharp
+3. OEMER processes the image to generate MusicXML
+4. MIDI conversion is performed if requested
+5. Results are packaged and returned to user
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Make your changes
+4. Add tests if applicable
+5. Ensure all linting passes (`npm run lint`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+### Development Guidelines
+
+- Follow TypeScript best practices
+- Use meaningful commit messages
+- Add JSDoc comments for complex functions
+- Ensure error handling is comprehensive
+- Test your changes thoroughly
 
 ## 📄 License
 
@@ -230,9 +324,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [OEMER](https://github.com/BreezeWhite/oemer) - Optical Music Recognition
-- [Clerk](https://clerk.com) - Authentication
+- [OEMER](https://github.com/BreezeWhite/oemer) - State-of-the-art Optical Music Recognition
+- [Clerk](https://clerk.com) - Authentication and user management
 - [Render](https://render.com) - Hosting platform
+- [Sharp](https://sharp.pixelplumbing.com/) - High-performance image processing
 
 ## 📞 Support
 
@@ -240,7 +335,17 @@ For support and questions:
 - Create an issue on GitHub
 - Check the troubleshooting section
 - Review the API documentation
+- Consult the OEMER documentation
+
+### Getting Help
+
+1. **Check the logs** for detailed error information
+2. **Verify environment variables** are correctly set
+3. **Test OEMER installation** separately
+4. **Review the API documentation** for proper usage
 
 ---
 
 **Ready to digitize your sheet music collection?** 🎵✨
+
+**Built with ❤️ by the Ensemble Team**
