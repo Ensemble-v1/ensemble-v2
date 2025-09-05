@@ -21,6 +21,7 @@ const authenticateUser = async (req, res, next) => {
 
     // For development/testing, allow a test token to bypass authentication
     if ((process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') && token === 'test-token-for-development') {
+      console.log('Using development test token for authentication');
       req.auth = {
         userId: 'dev-user-123',
         sessionId: 'dev-session-123',
@@ -51,9 +52,24 @@ const authenticateUser = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Clerk authentication error:', error);
+    
+    // Provide more detailed error information in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Token received:', token ? token.substring(0, 20) + '...' : 'No token');
+      console.error('Secret key configured:', process.env.CLERK_SECRET_KEY ? 'Yes' : 'No');
+    }
+    
     return res.status(401).json({
       error: 'Authentication failed',
-      message: 'Unable to verify authentication token'
+      message: 'Unable to verify authentication token',
+      ...(process.env.NODE_ENV === 'development' && {
+        debug: {
+          errorType: error.name,
+          errorMessage: error.message,
+          hasToken: !!token,
+          hasSecretKey: !!process.env.CLERK_SECRET_KEY
+        }
+      })
     });
   }
 };

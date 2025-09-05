@@ -4,7 +4,7 @@ Transform traditional sheet music into digital formats with AI-powered optical m
 
 ## 🚀 Features
 
-- **AI-Powered OMR**: Advanced optical music recognition using Audiveris
+- **AI-Powered OMR**: Advanced optical music recognition using OEMER
 - **Multiple Formats**: Convert to MusicXML and MIDI formats
 - **Web Interface**: Modern, responsive web application
 - **Authentication**: Secure user authentication with Clerk
@@ -23,7 +23,7 @@ Transform traditional sheet music into digital formats with AI-powered optical m
 - **Node.js 18+** - Runtime environment
 - **Express.js** - Web framework
 - **Sharp** - Image processing
-- **Audiveris** - Optical music recognition
+- **OEMER** - Optical music recognition
 - **Multer** - File upload handling
 
 ## 📋 Prerequisites
@@ -178,7 +178,7 @@ ensemble-v2/
 - Development authentication bypass
 
 ### Production Mode
-- Real OMR processing with Audiveris
+- Real OMR processing with OEMER
 - Optimized builds
 - Error handling for production
 - Secure authentication required
@@ -204,7 +204,7 @@ ensemble-v2/
 
 4. **OMR Processing Fails**
    - Development: Uses mock processing
-   - Production: Check Audiveris JAR availability
+   - Production: Check OEMER installation and dependencies
 
 ### Logs
 
@@ -230,7 +230,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [Audiveris](https://github.com/Audiveris/audiveris) - Optical Music Recognition
+- [OEMER](https://github.com/BreezeWhite/oemer) - Optical Music Recognition
 - [Clerk](https://clerk.com) - Authentication
 - [Render](https://render.com) - Hosting platform
 

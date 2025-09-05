@@ -1,55 +1,14 @@
-iconst { spawn, exec } = require('child_process');
 const path = require('path');
 const fs = require('fs-extra');
 const { logger } = require('../utils/logger');
 
 class MidiConverter {
   constructor() {
-    this.fluidSynthPath = process.env.FLUIDSYNTH_PATH || 'fluidsynth';
-    this.timidityPath = process.env.TIMIDITY_PATH || 'timidity';
-    
-    // Force detection every time
-    const detectedPath = this.detectMuseScore();
-    this.musescorePath = process.env.MUSESCORE_PATH || detectedPath;
-    
-    logger.info(`MidiConverter initialized with MuseScore path: ${this.musescorePath}`);
-    logger.info(`Detected path was: ${detectedPath}`);
-    logger.info(`Environment MUSESCORE_PATH: ${process.env.MUSESCORE_PATH}`);
+    logger.info('MidiConverter initialized with built-in conversion only');
   }
 
   /**
-   * Detect MuseScore installation
-   */
-  detectMuseScore() {
-    const possiblePaths = [
-      'mscore',
-      'musescore',
-      '/usr/bin/mscore',
-      '/usr/bin/musescore',
-      '/usr/local/bin/musescore',
-      '/opt/musescore/bin/musescore'
-    ];
-
-    logger.info('Starting MuseScore detection...');
-
-    for (const msPath of possiblePaths) {
-      try {
-        logger.info(`Checking path: ${msPath}`);
-        require('child_process').execSync(`which ${msPath}`, { stdio: 'ignore' });
-        logger.info(`Found MuseScore at: ${msPath}`);
-        return msPath;
-      } catch (error) {
-        logger.info(`Not found: ${msPath}`);
-        // Continue to next path
-      }
-    }
-
-    logger.warn('No MuseScore installation found');
-    return null;
-  }
-
-  /**
-   * Convert MusicXML to MIDI using multiple methods
+   * Convert MusicXML to MIDI using built-in converter
    */
   async convertXmlToMidi(xmlPath, outputPath) {
     try {
@@ -61,30 +20,9 @@ class MidiConverter {
         actualXmlPath = await this.extractXmlFromMxl(xmlPath);
       }
 
-      // For development/testing, use built-in converter directly
-      if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
-        logger.info(`Using built-in MIDI converter for development: ${actualXmlPath}`);
-        return await this.convertWithBuiltIn(actualXmlPath, outputPath);
-      }
-
-      // Try built-in converter first (more reliable in headless environment)
-      logger.info(`Attempting MIDI conversion with built-in converter for ${actualXmlPath}`);
-      const builtInResult = await this.convertWithBuiltIn(actualXmlPath, outputPath);
-      if (builtInResult.success) {
-        return builtInResult;
-      }
-
-      // Fallback to MuseScore if built-in fails
-      if (this.musescorePath) {
-        logger.info(`Falling back to MuseScore for ${actualXmlPath}`);
-        const musescoreResult = await this.convertWithMuseScore(actualXmlPath, outputPath);
-        if (musescoreResult.success) {
-          return musescoreResult;
-        }
-      }
-
-      // If both fail, return the built-in result which may have more details
-      return builtInResult;
+      // Use built-in converter for all environments
+      logger.info(`Converting MusicXML to MIDI using built-in converter: ${actualXmlPath}`);
+      return await this.convertWithBuiltIn(actualXmlPath, outputPath);
 
     } catch (error) {
       logger.error(`MIDI conversion failed for ${xmlPath}:`, error);
@@ -93,64 +31,6 @@ class MidiConverter {
         error: error.message
       };
     }
-  }
-
-  /**
-   * Convert using MuseScore (preferred method)
-   */
-  async convertWithMuseScore(xmlPath, outputPath) {
-    return new Promise((resolve, reject) => {
-      if (!this.musescorePath) {
-        reject(new Error('MuseScore path not found'));
-        return;
-      }
-
-      // Use xvfb-run to provide virtual display for MuseScore
-      const command = 'xvfb-run';
-      const allArgs = [
-        '-a',  // Automatically select display number
-        '--server-args=-screen 0 1024x768x24',  // Virtual screen config
-        this.musescorePath,
-        '-f', 'midi',  // Explicitly specify MIDI format
-        '-o', outputPath,
-        xmlPath
-      ];
-
-      logger.info(`Converting with MuseScore via xvfb-run: ${command} ${allArgs.join(' ')}`);
-
-      const childProcess = spawn(command, allArgs, {
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
-
-      let stderr = '';
-
-      childProcess.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      childProcess.on('close', (code) => {
-        if (code === 0 && fs.existsSync(outputPath)) {
-          resolve({
-            success: true,
-            midiPath: outputPath,
-            method: 'MuseScore'
-          });
-        } else {
-          reject(new Error(`MuseScore conversion failed with code ${code}: ${stderr}`));
-        }
-      });
-
-      childProcess.on('error', (error) => {
-        logger.error(`MuseScore spawn error:`, error);
-        reject(new Error(`Failed to start MuseScore: ${error.message}`));
-      });
-
-      // 60 second timeout
-      setTimeout(() => {
-        childProcess.kill('SIGTERM');
-        reject(new Error('MuseScore conversion timed out'));
-      }, 60000);
-    });
   }
 
   /**
@@ -382,54 +262,10 @@ class MidiConverter {
    * Check if conversion tools are available
    */
   async checkAvailability() {
-    const tools = {
-      musescore: false,
-      fluidsynth: false,
-      timidity: false
+    // Only built-in converter is available
+    return {
+      builtIn: true
     };
-
-    // Check MuseScore
-    if (this.musescorePath) {
-      try {
-        await this.executeCommand(`${this.musescorePath} --version`);
-        tools.musescore = true;
-      } catch (error) {
-        // MuseScore not available
-      }
-    }
-
-    // Check FluidSynth
-    try {
-      await this.executeCommand(`${this.fluidSynthPath} --version`);
-      tools.fluidsynth = true;
-    } catch (error) {
-      // FluidSynth not available
-    }
-
-    // Check TiMidity
-    try {
-      await this.executeCommand(`${this.timidityPath} --version`);
-      tools.timidity = true;
-    } catch (error) {
-      // TiMidity not available
-    }
-
-    return tools;
-  }
-
-  /**
-   * Execute shell command
-   */
-  async executeCommand(command) {
-    return new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve({ stdout, stderr });
-        }
-      });
-    });
   }
 }
 

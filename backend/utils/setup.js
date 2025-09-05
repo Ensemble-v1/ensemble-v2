@@ -9,8 +9,7 @@ async function setupDirectories() {
   const directories = [
     path.join(__dirname, '../temp'),
     path.join(__dirname, '../downloads'),
-    path.join(__dirname, '../logs'),
-    path.join(__dirname, '../audiveris')
+    path.join(__dirname, '../logs')
   ];
 
   for (const dir of directories) {

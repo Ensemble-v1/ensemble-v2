@@ -72,7 +72,11 @@ export default function SheetToDigitalPage() {
 
     try {
       const token = await getToken()
-      if (!token) {
+      
+      // In development mode, if no token is available, use the test token
+      const authToken = token || (process.env.NODE_ENV === 'development' ? 'test-token-for-development' : null)
+      
+      if (!authToken) {
         setError('Please sign in to use the conversion service')
         return
       }
@@ -83,11 +87,11 @@ export default function SheetToDigitalPage() {
       })
       formData.append('outputFormat', outputFormat)
 
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3003';
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const response = await fetch(`${backendUrl}/api/sheet-to-digital/convert`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${authToken}`
         },
         body: formData
       })
@@ -110,7 +114,7 @@ export default function SheetToDigitalPage() {
 
   const downloadResults = () => {
     if (conversionResult?.downloadUrl) {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3003';
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       window.open(`${backendUrl}${conversionResult.downloadUrl}`, '_blank')
     }
   }

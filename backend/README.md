@@ -4,7 +4,7 @@ A Node.js backend service for converting sheet music images to digital formats (
 
 ## Features
 
-- **Optical Music Recognition**: Convert sheet music images to MusicXML
+- **Optical Music Recognition**: Convert sheet music images to MusicXML using OEMER
 - **MIDI Conversion**: Generate MIDI files from MusicXML
 - **Mock Processing**: Development mode with mock OMR processing
 - **File Upload**: Support for JPG, PNG, TIFF, and PDF formats
@@ -18,7 +18,7 @@ A Node.js backend service for converting sheet music images to digital formats (
 - **Authentication**: Clerk
 - **Image Processing**: Sharp
 - **File Processing**: Multer, Archiver
-- **OMR Engine**: Audiveris (with mock fallback)
+- **OMR Engine**: OEMER (with mock fallback)
 - **MIDI Conversion**: Built-in XML to MIDI converter
 
 ## Quick Start
@@ -118,7 +118,7 @@ GET /api/sheet-to-digital/formats
 
 1. **Image Upload**: Files are uploaded via multipart/form-data
 2. **Preprocessing**: Images are enhanced using Sharp for better OMR
-3. **OMR Processing**: Audiveris processes images to extract MusicXML
+3. **OMR Processing**: OEMER processes images to extract MusicXML
 4. **MIDI Conversion**: MusicXML is converted to MIDI format
 5. **Packaging**: Results are zipped and made available for download
 
@@ -130,8 +130,8 @@ GET /api/sheet-to-digital/formats
 - Faster iteration and testing
 
 ### Production Mode
-- Attempts real OMR processing with Audiveris
-- Falls back to mock processing if Audiveris unavailable
+- Attempts real OMR processing with OEMER
+- Falls back to mock processing if OEMER unavailable
 - Optimized for serverless deployment
 
 ## Environment Variables
@@ -143,16 +143,17 @@ GET /api/sheet-to-digital/formats
 | `FRONTEND_URL` | Frontend application URL | - |
 | `CLERK_SECRET_KEY` | Clerk authentication secret | - |
 | `CLERK_PUBLISHABLE_KEY` | Clerk authentication publishable key | - |
-| `AUDIVERIS_PATH` | Path to Audiveris JAR file | `./audiveris/audiveris.jar` |
-| `MUSESCORE_PATH` | Path to MuseScore executable | `mscore` |
+| `PYTHON_PATH` | Path to Python executable | `python3` |
+| `OEMER_PATH` | Path to OEMER executable | `oemer` |
+| `OEMER_MAX_MEMORY` | Maximum memory for OEMER | `4g` |
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Audiveris JAR not found**
+1. **OEMER not installed**
    - In development: Uses mock processing automatically
-   - In production: Ensure JAR file is available or use mock fallback
+   - In production: Install OEMER via pip or use mock fallback
 
 2. **Authentication errors**
    - Verify Clerk keys are correctly set
@@ -164,7 +165,11 @@ GET /api/sheet-to-digital/formats
 
 4. **MIDI conversion fails**
    - Built-in converter handles most cases
-   - MuseScore fallback available if installed
+   - No external dependencies required
+
+3. **OEMER installation issues**
+   - Install OEMER: `pip install oemer`
+   - Check Python environment and dependencies
 
 ### Logs
 

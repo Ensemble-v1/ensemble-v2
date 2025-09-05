@@ -8,7 +8,7 @@ const archiver = require('archiver');
 
 const { validateSheetImage } = require('../middleware/validation');
 const { authenticateUser } = require('../middleware/auth');
-const { AudiverisService } = require('../services/audiveris-service');
+const { OemerService } = require('../services/oemer-service');
 const { MidiConverter } = require('../services/midi-converter');
 const { logger } = require('../utils/logger');
 
@@ -33,7 +33,7 @@ const upload = multer({
 });
 
 // Initialize services
-const audiverisService = new AudiverisService();
+const oemerService = new OemerService();
 const midiConverter = new MidiConverter();
 
 /**
@@ -83,9 +83,9 @@ router.post('/convert',
           
           await fs.writeFile(`${inputPath}.png`, processedBuffer);
           
-          // Run Audiveris OMR
-          logger.info(`Processing file ${i + 1}/${files.length} with Audiveris`);
-          const omrResult = await audiverisService.processImage(`${inputPath}.png`, tempDir);
+          // Run Oemer OMR
+          logger.info(`Processing file ${i + 1}/${files.length} with Oemer`);
+          const omrResult = await oemerService.processImage(`${inputPath}.png`, tempDir);
           
           if (!omrResult.success) {
             throw new Error(`OMR processing failed: ${omrResult.error}`);
@@ -127,7 +127,7 @@ router.post('/convert',
       
       // Create download package
       const outputZipPath = path.join(__dirname, '../downloads', `${jobId}.zip`);
-      await createDownloadPackage(results, tempDir, outputZipPath);
+      await createDownloadPackage(results, tempDir, outputZipPath, jobId);
       
       // Clean up temp directory
       setTimeout(() => {
@@ -233,25 +233,25 @@ router.get('/formats', (req, res) => {
 /**
  * Create download package with all converted files
  */
-async function createDownloadPackage(results, tempDir, outputPath) {
-  return new Promise((resolve, reject) => {
+async function createDownloadPackage(results, tempDir, outputPath, jobId) {
+  return new Promise(async (resolve, reject) => {
     const output = fs.createWriteStream(outputPath);
     const archive = archiver('zip', { zlib: { level: 9 } });
-    
+
     output.on('close', () => {
-      logger.info(`Download package created: ${archive.pointer()} bytes`);
+      logger.info(`Download package created: ${archive.pointer()} bytes for job ${jobId}`);
       resolve();
     });
-    
+
     archive.on('error', reject);
     archive.pipe(output);
-    
+
     // Add converted files to archive
     for (const [index, result] of results.entries()) {
       if (result.error) continue;
-      
+
       const baseName = path.parse(result.originalName).name;
-      
+
       // Add MusicXML file (extract from MXL if needed)
       if (result.musicXmlPath && fs.existsSync(result.musicXmlPath)) {
         if (result.musicXmlPath.endsWith('.mxl')) {
@@ -260,15 +260,15 @@ async function createDownloadPackage(results, tempDir, outputPath) {
             const AdmZip = require('adm-zip');
             const zip = new AdmZip(result.musicXmlPath);
             const zipEntries = zip.getEntries();
-            
-            const xmlEntry = zipEntries.find(entry => 
+
+            const xmlEntry = zipEntries.find(entry =>
               entry.entryName.endsWith('.xml') && !entry.isDirectory
             );
-            
+
             if (xmlEntry) {
               const xmlContent = xmlEntry.getData().toString('utf8');
               archive.append(xmlContent, { name: `${baseName}.xml` });
-              logger.info(`Added extracted XML content for ${baseName}`);
+              logger.info(`Added extracted XML content for ${baseName} (${xmlContent.length} chars)`);
             } else {
               logger.warn(`No XML found in MXL file for ${baseName}`);
             }
@@ -278,17 +278,25 @@ async function createDownloadPackage(results, tempDir, outputPath) {
             archive.file(result.musicXmlPath, { name: `${baseName}.mxl` });
           }
         } else {
-          // Plain XML file
-          archive.file(result.musicXmlPath, { name: `${baseName}.xml` });
+          // Plain XML file - read content and add with proper name
+          try {
+            const xmlContent = await fs.readFile(result.musicXmlPath, 'utf8');
+            archive.append(xmlContent, { name: `${baseName}.xml` });
+            logger.info(`Added XML content for ${baseName} (${xmlContent.length} chars)`);
+          } catch (error) {
+            logger.error(`Failed to read XML file ${result.musicXmlPath}:`, error);
+            // Fallback to file copy
+            archive.file(result.musicXmlPath, { name: `${baseName}.xml` });
+          }
         }
       }
-      
+
       // Add MIDI file
       if (result.midiPath && fs.existsSync(result.midiPath)) {
         archive.file(result.midiPath, { name: `${baseName}.mid` });
       }
     }
-    
+
     // Add conversion report
     const report = {
       timestamp: new Date().toISOString(),
@@ -297,7 +305,7 @@ async function createDownloadPackage(results, tempDir, outputPath) {
       failedConversions: results.filter(r => r.error).length,
       results: results
     };
-    
+
     archive.append(JSON.stringify(report, null, 2), { name: 'conversion_report.json' });
     archive.finalize();
   });
